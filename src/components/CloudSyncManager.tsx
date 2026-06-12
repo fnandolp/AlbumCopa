@@ -208,9 +208,32 @@ export function CloudSyncManager({
             )}
 
             {syncError && (
-              <div className="mt-3 p-2.5 bg-red-950 border border-red-900 text-red-300 rounded-xl text-xs flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                <span>Ocorreu um erro de sincronização: {syncError}</span>
+              <div className="mt-4">
+                {syncError.includes("Quota exceeded") || syncError.toLowerCase().includes("quota") ? (
+                  <div className="p-4 bg-yellow-950/40 border border-yellow-500/30 rounded-xl text-xs text-yellow-200">
+                    <div className="flex items-center gap-2 mb-2 font-bold text-yellow-400">
+                      <AlertTriangle className="w-4 h-4 shrink-0 text-yellow-500" />
+                      <span>Limite Diário de Uso Temporariamente Excedido (Firebase)</span>
+                    </div>
+                    <p className="leading-relaxed text-slate-300">
+                      O servidor de banco de dados gratuito atingiu o limite de consultas diárias. 
+                      Isso ocorreu porque a versão anterior possuía um loop automático de sincronização instantânea em segundo plano que acabou consumindo todas as requisições permitidas.
+                    </p>
+                    <p className="leading-relaxed text-slate-300 mt-2 font-semibold text-yellow-400">
+                      ✨ A boa notícia: Acabamos de subir uma correção definitiva para eliminar esse loop de consumo!
+                    </p>
+                    <p className="leading-relaxed text-slate-300 mt-2">
+                      O Firebase redefine esse limite gratuito automaticamente nas próximas horas (no dia seguinte). 
+                      Enquanto isso, <strong>não se preocupe: você pode continuar marcando suas figurinhas normalmente!</strong> 
+                      Seu progresso será salvo offline no seu próprio celular, e a nuvem voltará a sincronizar quando a cota expirar e reiniciar.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-red-950 border border-red-900 text-red-300 rounded-xl text-xs flex items-center gap-1.5">
+                    <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                    <span>Ocorreu um erro de sincronização: {syncError}</span>
+                  </div>
+                )}
               </div>
             )}
           </motion.div>

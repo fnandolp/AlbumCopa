@@ -81,54 +81,73 @@ export default function App() {
       unsubscribeRef.current();
     }
 
+    let initialResolved = false;
+
     const unsub = subscribeToAlbum(
       code,
       async (remoteData) => {
-        // Handle sync resolution mode when first linking
-        setAlbumState((prevLocal) => {
-          let mergedGlued = { ...prevLocal.glued };
-          let mergedRepeated = { ...prevLocal.repeated };
+        if (!initialResolved) {
+          initialResolved = true;
 
-          if (mode === "merge") {
-            // Combine local and remote elements
+          // Handle sync resolution mode when first linking
+          setAlbumState((prevLocal) => {
+            let mergedGlued = { ...prevLocal.glued };
+            let mergedRepeated = { ...prevLocal.repeated };
+
+            if (mode === "merge") {
+              // Combine local and remote elements
+              const remoteGlued = remoteData.glued || {};
+              const remoteRepeated = remoteData.repeated || {};
+
+              // Merge Glue boolean
+              ALL_STICKERS.forEach((st) => {
+                if (remoteGlued[st.id] || prevLocal.glued[st.id]) {
+                  mergedGlued[st.id] = true;
+                }
+                // Merge repeated: take maximum
+                const lRep = prevLocal.repeated[st.id] || 0;
+                const rRep = remoteRepeated[st.id] || 0;
+                const maxRep = Math.max(lRep, rRep);
+                if (maxRep > 0) {
+                  mergedRepeated[st.id] = maxRep;
+                }
+              });
+
+              // Push the merged representation back to cloud ONCE
+              syncAlbumToCloud(code, mergedGlued, mergedRepeated);
+            } else if (mode === "override") {
+              // Upload current local state directly to cloud ONCE
+              syncAlbumToCloud(code, prevLocal.glued, prevLocal.repeated);
+              mergedGlued = prevLocal.glued;
+              mergedRepeated = prevLocal.repeated;
+            } else {
+              // Download mode: take remote contents
+              mergedGlued = remoteData.glued || {};
+              mergedRepeated = remoteData.repeated || {};
+            }
+
+            setIsSyncing(false);
+            return {
+              albumCode: code,
+              glued: mergedGlued,
+              repeated: mergedRepeated,
+              updatedAt: remoteData.updatedAt || new Date().toISOString()
+            };
+          });
+        } else {
+          // Continuous sync: subsequent events MUST only download changes, NEVER write back!
+          setAlbumState((prevLocal) => {
             const remoteGlued = remoteData.glued || {};
             const remoteRepeated = remoteData.repeated || {};
 
-            // Merge Glue boolean
-            ALL_STICKERS.forEach((st) => {
-              if (remoteGlued[st.id] || prevLocal.glued[st.id]) {
-                mergedGlued[st.id] = true;
-              }
-              // Merge repeated: take maximum or sum
-              const lRep = prevLocal.repeated[st.id] || 0;
-              const rRep = remoteRepeated[st.id] || 0;
-              const maxRep = Math.max(lRep, rRep);
-              if (maxRep > 0) {
-                mergedRepeated[st.id] = maxRep;
-              }
-            });
-
-            // Push the merged representation back to cloud!
-            syncAlbumToCloud(code, mergedGlued, mergedRepeated);
-          } else if (mode === "override") {
-            // Upload current local state directly to cloud
-            syncAlbumToCloud(code, prevLocal.glued, prevLocal.repeated);
-            mergedGlued = prevLocal.glued;
-            mergedRepeated = prevLocal.repeated;
-          } else {
-            // Download mode: take remote contents
-            mergedGlued = remoteData.glued || {};
-            mergedRepeated = remoteData.repeated || {};
-          }
-
-          setIsSyncing(false);
-          return {
-            albumCode: code,
-            glued: mergedGlued,
-            repeated: mergedRepeated,
-            updatedAt: remoteData.updatedAt || new Date().toISOString()
-          };
-        });
+            return {
+              ...prevLocal,
+              glued: remoteGlued,
+              repeated: remoteRepeated,
+              updatedAt: remoteData.updatedAt || new Date().toISOString()
+            };
+          });
+        }
       },
       (err) => {
         setSyncError(err.message || "Não foi possível conectar ao Firestore.");
