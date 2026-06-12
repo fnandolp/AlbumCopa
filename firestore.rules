@@ -1,0 +1,47 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 1. Global Safety Net - default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() >= 3 && id.size() <= 64 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation helper for albums
+    function isValidAlbum(data) {
+      return data.keys().hasAll(['albumCode', 'updatedAt', 'glued', 'repeated'])
+        && data.keys().size() == 4
+        && data.albumCode is string
+        && data.albumCode.size() <= 64
+        && data.updatedAt == request.time
+        && data.glued is map
+        && data.repeated is map;
+    }
+
+    // Main album tracker endpoint
+    match /albums/{albumId} {
+      // allow get if ID is valid (acts as secret phrase)
+      allow get: if isValidId(albumId);
+      
+      // allow creation with proper formatting
+      allow create: if isValidId(albumId) && isValidAlbum(incoming());
+      
+      // allow update with proper formatting and ensuring albumCode cannot be altered
+      allow update: if isValidId(albumId) 
+        && isValidAlbum(incoming()) 
+        && incoming().albumCode == existing().albumCode;
+    }
+  }
+}

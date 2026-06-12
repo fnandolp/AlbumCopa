@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Album": {
+      "title": "Album",
+      "description": "Represents a synchronized 2026 Copa sticker album progress.",
+      "type": "object",
+      "properties": {
+        "albumCode": {
+          "type": "string",
+          "description": "Unique alphanumeric sharing code for co-updating."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp of the last modification."
+        },
+        "glued": {
+          "type": "object",
+          "description": "Key-value map containing stickerId -> boolean indicating if it is glued."
+        },
+        "repeated": {
+          "type": "object",
+          "description": "Key-value map containing stickerId -> integer count of duplicates."
+        }
+      },
+      "required": ["albumCode"]
+    }
+  },
+  "firestore": {
+    "/albums/{albumId}": {
+      "schema": "Album",
+      "description": "The main collection storing synced Copa albums by their custom sharing code."
+    }
+  }
+}
