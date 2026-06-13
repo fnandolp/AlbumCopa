@@ -15,6 +15,7 @@ interface StickersGridProps {
   onIncrementRepeated: (id: string, amount: number) => void;
   activeSection: string; // The selected section (e.g. Capa, Fls. 1, Brasil, etc.)
   completedPages: Record<number, boolean>;
+  hideHeader?: boolean;
 }
 
 export function StickersGrid({
@@ -24,7 +25,8 @@ export function StickersGrid({
   onToggleGlued,
   onIncrementRepeated,
   activeSection,
-  completedPages
+  completedPages,
+  hideHeader = false
 }: StickersGridProps) {
   // Filter stickers for the active section
   const sectionStickers = stickers.filter((s) => s.section === activeSection);
@@ -232,14 +234,16 @@ export function StickersGrid({
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-xl font-bold text-yellow-500 tracking-tight">{activeSection}</h2>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Preencha os dados de figurinhas coladas e repetidas para esta seção do álbum.
-          </p>
+      {!hideHeader && (
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-xl font-bold text-yellow-500 tracking-tight">{activeSection}</h2>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Preencha os dados de figurinhas coladas e repetidas para esta seção do álbum.
+            </p>
+          </div>
         </div>
-      </div>
+      )}
 
       {isCountryType ? (
         // Double-page display

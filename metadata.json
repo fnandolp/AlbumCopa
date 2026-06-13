@@ -1,7 +1,7 @@
 {
   "name": "Controle do Álbum Copa 2026",
   "description": "Aplicativo para acompanhar o álbum de figurinhas da Copa do Mundo de 2026 com cadastro de figurinhas coladas, repetidas, faltantes e sincronização em tempo real na nuvem entre múltiplos aparelhos.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
   ]
